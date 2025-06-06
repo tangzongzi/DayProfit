@@ -1,0 +1,68 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+}
+
+.container {
+    max-width: 1140px;
+    margin: 0 auto;
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.card-header {
+    background-color: #0d6efd;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th, .table td {
+    vertical-align: middle;
+}
+
+#profitChart {
+    height: 400px;
+    width: 100%;
+}
+
+.positive-profit {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.negative-profit {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+#loadingIndicator {
+    padding: 20px;
+}
+
+.nav-tabs .nav-link {
+    color: #495057;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+#resultSection {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+} 
