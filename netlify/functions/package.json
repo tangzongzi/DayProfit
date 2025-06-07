@@ -1,9 +1,0 @@
-{
-  "name": "day-profit-functions",
-  "version": "1.0.0",
-  "description": "Netlify Functions for DayProfit application",
-  "main": "process.js",
-  "dependencies": {
-    "formidable": "^2.1.1"
-  }
-} 
