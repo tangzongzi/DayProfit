@@ -13,37 +13,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalProfit = document.getElementById('totalProfit');
     const copyAllProfitsBtn = document.getElementById('copyAllProfitsBtn');
     const loadingIndicator = document.getElementById('loading-indicator');
+    const calculationMode = document.getElementById('calculationMode');
+    const diagnosticBtn = document.getElementById('show-diagnostic-btn');
+    const modal = document.getElementById('diagnostic-modal');
+    const closeModalBtn = document.querySelector('.close-modal');
     
+    // 初始化弹窗关闭功能
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', function() {
+            modal.classList.remove('show');
+        });
+    }
+    
+    // 点击弹窗外部关闭
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.classList.remove('show');
+        }
+    });
+    
+    // 添加诊断按钮点击事件
+    if (diagnosticBtn) {
+        diagnosticBtn.addEventListener('click', runDiagnostics);
+    }
+
     // 存储当前显示的利润数据，用于批量复制
     let currentProfitData = [];
     
     // 原始上传数据缓存
     let uploadedData = null;
     
-    // 计算模式选择
-    const calculationMode = document.createElement('select');
-    calculationMode.id = 'calculationMode';
-    calculationMode.innerHTML = `
-        <option value="raw">使用原始数据计算（默认）</option>
-        <option value="truncateEach">每项金额先截断再计算</option>
-        <option value="truncateProfit">每笔利润计算后立即截断</option>
-    `;
+    // 添加计算模式改变事件
     calculationMode.addEventListener('change', function() {
         if (uploadedData && uploadedData.length > 0) {
             processData();
         }
     });
-    
-    // 将计算模式选择添加到过滤区域
-    const filterSection = document.querySelector('.filter-section');
-    const modeContainer = document.createElement('div');
-    modeContainer.className = 'filter-item';
-    const modeLabel = document.createElement('label');
-    modeLabel.textContent = '计算模式:';
-    modeLabel.setAttribute('for', 'calculationMode');
-    modeContainer.appendChild(modeLabel);
-    modeContainer.appendChild(calculationMode);
-    filterSection.appendChild(modeContainer);
     
     // 添加复制所有利润数据的事件处理
     copyAllProfitsBtn.addEventListener('click', function() {
@@ -55,7 +60,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const file = e.target.files[0];
         if (!file) return;
         
-        fileName.textContent = "正在读取文件...";
+        // 添加按钮文本节点引用
+        const btnText = document.querySelector('.btn-text');
+        const originalBtnText = btnText.textContent;
+        
+        fileName.textContent = '';
+        fileName.classList.add('loading');
+        fileName.textContent = '正在读取...';
+        btnText.textContent = '已选择';
         
         // 确保XLSX库已加载
         ensureXLSXLoaded().then(() => {
@@ -63,24 +75,30 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 使用setTimeout给浏览器时间更新UI
             setTimeout(() => {
-                const reader = new FileReader();
+        const reader = new FileReader();
                 
-                reader.onload = function(e) {
+        reader.onload = function(e) {
                     try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        uploadedData = XLSX.utils.sheet_to_json(firstSheet);
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            uploadedData = XLSX.utils.sheet_to_json(firstSheet);
                         
+                        fileName.classList.remove('loading');
                         fileName.textContent = file.name;
-                        
-                        // 自动设置日期范围
-                        setDateRangeFromData(uploadedData);
+            
+            // 自动设置日期范围
+            setDateRangeFromData(uploadedData);
                         
                         hideLoading();
                     } catch (error) {
                         console.error('文件解析错误:', error);
-                        fileName.textContent = '文件解析失败';
+                        fileName.classList.remove('loading');
+                        fileName.textContent = '解析失败';
+                        setTimeout(() => {
+                            fileName.textContent = '';
+                            btnText.textContent = originalBtnText;
+                        }, 2000);
                         hideLoading();
                     }
                 };
@@ -88,20 +106,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.onprogress = function(event) {
                     if (event.lengthComputable) {
                         const percentLoaded = Math.round((event.loaded / event.total) * 100);
-                        fileName.textContent = `读取中: ${percentLoaded}%`;
+                        fileName.textContent = `${percentLoaded}%`;
                     }
                 };
                 
                 reader.onerror = function() {
-                    fileName.textContent = '文件读取失败';
+                    fileName.classList.remove('loading');
+                    fileName.textContent = '读取失败';
+                    setTimeout(() => {
+                        fileName.textContent = '';
+                        btnText.textContent = originalBtnText;
+                    }, 2000);
                     hideLoading();
                 };
                 
-                reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(file);
             }, 10);
         }).catch(error => {
             console.error('加载XLSX库失败:', error);
-            fileName.textContent = 'XLSX库加载失败，请刷新页面重试';
+            fileName.classList.remove('loading');
+            fileName.textContent = '加载失败';
+            setTimeout(() => {
+                fileName.textContent = '';
+                btnText.textContent = originalBtnText;
+            }, 2000);
             hideLoading();
         });
     });
@@ -189,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 延迟处理以允许UI更新
         setTimeout(() => {
-            processData();
+        processData();
             hideLoading();
         }, 10);
     });
@@ -254,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         return false;
                     }
                 } else if (order['采购单状态'] !== statusValue) {
-                    return false;
+                return false;
                 }
             }
             
@@ -340,72 +368,72 @@ document.addEventListener('DOMContentLoaded', function() {
             for (let i = processedCount; i < endIndex; i++) {
                 const order = orders[i];
                 
-                // 标准化日期格式
-                const creationDate = normalizeDate(order['创建时间']);
+            // 标准化日期格式
+            const creationDate = normalizeDate(order['创建时间']);
                 if (!creationDate) continue; // 跳过没有有效日期的订单
-                
-                // 计算这笔订单的利润：店铺商品小计 - 小计金额
-                let income, expense, profit;
-                
-                // 根据不同计算模式处理
-                switch (mode) {
-                    case 'truncateEach':
-                        // 每项金额先截断再计算
-                        income = parseFloat(truncateTo2Decimals(parseNumber(order['店铺商品小计'])));
-                        expense = parseFloat(truncateTo2Decimals(parseNumber(order['小计金额'])));
-                        profit = income - expense;
-                        break;
-                    case 'truncateProfit':
-                        // 每笔利润计算后立即截断
-                        income = parseNumber(order['店铺商品小计']);
-                        expense = parseNumber(order['小计金额']);
-                        profit = parseFloat(truncateTo2Decimals(income - expense));
-                        break;
-                    default:
-                        // 原始数据计算（默认）
-                        income = parseNumber(order['店铺商品小计']);
-                        expense = parseNumber(order['小计金额']);
-                        profit = income - expense;
-                        break;
-                }
-                
-                // 如果这个日期已经在Map中，更新数据；否则，添加新的日期
-                if (dailyData.has(creationDate)) {
-                    const data = dailyData.get(creationDate);
-                    data.orderCount += 1;
-                    data.totalIncome += income;
-                    data.totalExpense += expense;
-                    data.totalProfit += profit;
-                } else {
-                    dailyData.set(creationDate, {
-                        date: creationDate,
-                        orderCount: 1,
-                        totalIncome: income,
-                        totalExpense: expense,
-                        totalProfit: profit
-                    });
-                }
+            
+            // 计算这笔订单的利润：店铺商品小计 - 小计金额
+            let income, expense, profit;
+            
+            // 根据不同计算模式处理
+            switch (mode) {
+                case 'truncateEach':
+                    // 每项金额先截断再计算
+                    income = parseFloat(truncateTo2Decimals(parseNumber(order['店铺商品小计'])));
+                    expense = parseFloat(truncateTo2Decimals(parseNumber(order['小计金额'])));
+                    profit = income - expense;
+                    break;
+                case 'truncateProfit':
+                    // 每笔利润计算后立即截断
+                    income = parseNumber(order['店铺商品小计']);
+                    expense = parseNumber(order['小计金额']);
+                    profit = parseFloat(truncateTo2Decimals(income - expense));
+                    break;
+                default:
+                    // 原始数据计算（默认）
+                    income = parseNumber(order['店铺商品小计']);
+                    expense = parseNumber(order['小计金额']);
+                    profit = income - expense;
+                    break;
+            }
+            
+            // 如果这个日期已经在Map中，更新数据；否则，添加新的日期
+            if (dailyData.has(creationDate)) {
+                const data = dailyData.get(creationDate);
+                data.orderCount += 1;
+                data.totalIncome += income;
+                data.totalExpense += expense;
+                data.totalProfit += profit;
+            } else {
+                dailyData.set(creationDate, {
+                    date: creationDate,
+                    orderCount: 1,
+                    totalIncome: income,
+                    totalExpense: expense,
+                    totalProfit: profit
+                });
+            }
             }
             
             processedCount = endIndex;
-            
+        
             // 如果还有未处理的记录，继续处理
             if (processedCount < orders.length) {
                 setTimeout(processBatch, 0);
             } else {
                 // 处理完成，将Map转换为数组并排序
                 const results = Array.from(dailyData.values()).sort((a, b) => {
-                    // 确保日期格式正确再比较
-                    const dateA = new Date(a.date);
-                    const dateB = new Date(b.date);
-                    
-                    // 如果日期无效，使用字符串比较
-                    if (isNaN(dateA) || isNaN(dateB)) {
-                        return a.date > b.date ? -1 : 1;
-                    }
-                    
-                    return dateB - dateA;
-                });
+                // 确保日期格式正确再比较
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                
+                // 如果日期无效，使用字符串比较
+                if (isNaN(dateA) || isNaN(dateB)) {
+                    return a.date > b.date ? -1 : 1;
+                }
+                
+                return dateB - dateA;
+            });
                 
                 displayResults(results);
                 hideLoading();
@@ -446,15 +474,10 @@ document.addEventListener('DOMContentLoaded', function() {
             dateCell.textContent = day.date;
             row.appendChild(dateCell);
             
-            // 利润单元格移到日期单元格后面
+            // 利润单元格移到日期单元格后面 - 简化创建方式，不添加特殊类名和样式
             const profitCell = document.createElement('td');
-            // 移除单位，使纯数字更容易复制
             profitCell.textContent = truncateTo2Decimals(day.totalProfit) + ' 元';
-            // 将纯数字值保存为attribute，方便复制
             profitCell.setAttribute('data-value', truncateTo2Decimals(day.totalProfit));
-            profitCell.className = 'profit-cell';
-            // 根据利润是否为正设置不同颜色
-            profitCell.style.color = day.totalProfit >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
             row.appendChild(profitCell);
             
             const countCell = document.createElement('td');
@@ -489,7 +512,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // 更新汇总显示
         totalOrders.textContent = orderCount;
         totalProfit.textContent = truncateTo2Decimals(profitSum) + ' 元';
-        totalProfit.style.color = profitSum >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
         
         // 显示结果区域
         resultSection.classList.remove('hidden');
@@ -514,39 +536,25 @@ document.addEventListener('DOMContentLoaded', function() {
             currentProfitData = [];
         }
         
-        // 添加利润列复制功能
+        // 修改添加利润列复制功能，移除会引起动画的部分
         addProfitCopyFeature();
-        
-        // 添加诊断按钮
-        showDiagnosticBtn();
     }
     
-    // 添加利润列复制功能
+    // 修改添加利润列复制功能，移除会引起动画的部分
     function addProfitCopyFeature() {
-        const profitCells = document.querySelectorAll('.profit-cell');
+        const profitCells = document.querySelectorAll('td:nth-child(2)');
         profitCells.forEach(cell => {
             cell.style.cursor = 'pointer';
             cell.title = '点击复制数值';
             
             cell.addEventListener('click', function() {
                 const value = this.getAttribute('data-value');
-                navigator.clipboard.writeText(value)
-                    .then(() => {
-                        // 显示复制成功的反馈
-                        const originalColor = this.style.color;
-                        const originalText = this.textContent;
-                        
-                        this.textContent = '已复制!';
-                        this.style.color = '#2196F3';
-                        
-                        setTimeout(() => {
-                            this.textContent = originalText;
-                            this.style.color = originalColor;
-                        }, 1000);
-                    })
-                    .catch(err => {
-                        console.error('无法复制: ', err);
-                    });
+                if (value) {
+                    navigator.clipboard.writeText(value)
+                        .catch(err => {
+                            console.error('无法复制: ', err);
+                        });
+                }
             });
         });
     }
@@ -562,136 +570,102 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 调试功能，测试利润计算模式
     function runDiagnostics() {
-        if (!uploadedData || uploadedData.length === 0) return;
+        if (!uploadedData || uploadedData.length === 0) {
+            alert('请先上传数据表格并执行计算！');
+            return;
+        }
         
         showLoading();
         
         setTimeout(() => {
-            // 将诊断信息输出到页面
-            const diagnosticSection = document.createElement('div');
-            diagnosticSection.id = 'diagnostic-section';
-            diagnosticSection.style.cssText = 'margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: var(--border-radius); border: 1px solid #ddd;';
-            
-            const diagnosticTitle = document.createElement('h3');
-            diagnosticTitle.textContent = '计算诊断信息（不同计算模式下的结果）';
-            diagnosticSection.appendChild(diagnosticTitle);
-            
-            const resultContainer = document.querySelector('#result-section');
-            
-            // 创建一个表格
-            const table = document.createElement('table');
-            table.style.width = '100%';
-            
-            const thead = document.createElement('thead');
-            thead.innerHTML = `
-                <tr>
-                    <th>日期</th>
-                    <th>原始数据计算</th>
-                    <th>每项金额先截断</th>
-                    <th>每笔利润先截断</th>
+            // 创建诊断内容
+            const diagnosticContent = document.getElementById('diagnostic-content');
+            diagnosticContent.innerHTML = ''; // 清空内容
+        
+        const diagnosticTitle = document.createElement('h3');
+            diagnosticTitle.textContent = '不同计算模式下的结果比较';
+            diagnosticContent.appendChild(diagnosticTitle);
+        
+        // 创建一个表格
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th>日期</th>
+                <th>原始数据计算</th>
+                <th>每项金额先截断</th>
+                <th>每笔利润先截断</th>
                     <th>订单数</th>
-                </tr>
-            `;
-            table.appendChild(thead);
+            </tr>
+        `;
+        table.appendChild(thead);
+        
+        const tbody = document.createElement('tbody');
+        
+        // 应用筛选条件
+        const filteredData = filterData(uploadedData);
+        
+        // 计算三种模式下的每日利润
+        const rawResults = calculateDailyProfitsByMode(filteredData, 'raw');
+        const truncateEachResults = calculateDailyProfitsByMode(filteredData, 'truncateEach');
+        const truncateProfitResults = calculateDailyProfitsByMode(filteredData, 'truncateProfit');
+        
+        // 合并所有日期
+        const allDates = new Set([
+            ...rawResults.map(d => d.date),
+            ...truncateEachResults.map(d => d.date),
+            ...truncateProfitResults.map(d => d.date)
+        ]);
+        
+        // 排序日期
+        const sortedDates = Array.from(allDates).sort((a, b) => new Date(b) - new Date(a));
+        
+        // 创建诊断表格行
+        sortedDates.forEach(date => {
+            const rawData = rawResults.find(d => d.date === date) || { totalProfit: 0, orderCount: 0 };
+            const truncateEachData = truncateEachResults.find(d => d.date === date) || { totalProfit: 0, orderCount: 0 };
+            const truncateProfitData = truncateProfitResults.find(d => d.date === date) || { totalProfit: 0, orderCount: 0 };
             
-            const tbody = document.createElement('tbody');
-            
-            // 应用筛选条件
-            const filteredData = filterData(uploadedData);
-            
-            // 计算三种模式下的每日利润
-            const rawResults = calculateDailyProfitsByMode(filteredData, 'raw');
-            const truncateEachResults = calculateDailyProfitsByMode(filteredData, 'truncateEach');
-            const truncateProfitResults = calculateDailyProfitsByMode(filteredData, 'truncateProfit');
-            
-            // 合并所有日期
-            const allDates = new Set([
-                ...rawResults.map(d => d.date),
-                ...truncateEachResults.map(d => d.date),
-                ...truncateProfitResults.map(d => d.date)
-            ]);
-            
-            // 排序日期
-            const sortedDates = Array.from(allDates).sort((a, b) => new Date(b) - new Date(a));
-            
-            // 创建诊断表格行
-            sortedDates.forEach(date => {
-                const rawData = rawResults.find(d => d.date === date) || { totalProfit: 0, orderCount: 0 };
-                const truncateEachData = truncateEachResults.find(d => d.date === date) || { totalProfit: 0, orderCount: 0 };
-                const truncateProfitData = truncateProfitResults.find(d => d.date === date) || { totalProfit: 0, orderCount: 0 };
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${date}</td>
-                    <td>${truncateTo2Decimals(rawData.totalProfit)} 元</td>
-                    <td>${truncateTo2Decimals(truncateEachData.totalProfit)} 元</td>
-                    <td>${truncateTo2Decimals(truncateProfitData.totalProfit)} 元</td>
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${date}</td>
+                <td>${truncateTo2Decimals(rawData.totalProfit)} 元</td>
+                <td>${truncateTo2Decimals(truncateEachData.totalProfit)} 元</td>
+                <td>${truncateTo2Decimals(truncateProfitData.totalProfit)} 元</td>
                     <td>${rawData.orderCount}</td>
-                `;
-                
-                // 高亮显示如果有差异
-                const rawProfit = parseFloat(truncateTo2Decimals(rawData.totalProfit));
-                const eachProfit = parseFloat(truncateTo2Decimals(truncateEachData.totalProfit));
-                const profitProfit = parseFloat(truncateTo2Decimals(truncateProfitData.totalProfit));
-                
-                if (rawProfit !== eachProfit || rawProfit !== profitProfit) {
-                    row.style.backgroundColor = '#fff8e1';
-                }
-                
-                tbody.appendChild(row);
-            });
-            
-            table.appendChild(tbody);
-            diagnosticSection.appendChild(table);
-            
-            // 添加帮助说明
-            const helpText = document.createElement('div');
-            helpText.style.cssText = 'margin-top: 15px; font-size: 14px; color: #555;';
-            helpText.innerHTML = `
-                <p>如果你的人工计算结果和上面某种模式匹配，请选择该计算模式。</p>
-                <p>如需更多帮助，请手动计算几笔订单并详细记录金额，以便比对。</p>
             `;
-            diagnosticSection.appendChild(helpText);
             
-            // 添加诊断按钮
-            const diagnosticBtn = document.createElement('button');
-            diagnosticBtn.textContent = '隐藏诊断信息';
-            diagnosticBtn.style.cssText = 'margin-top: 10px; padding: 5px 10px; background-color: #f0f0f0; border: 1px solid #ddd; border-radius: 4px;';
-            diagnosticBtn.onclick = function() {
-                const section = document.getElementById('diagnostic-section');
-                if (section) {
-                    section.remove();
-                    // 添加重新显示诊断的按钮
-                    showDiagnosticBtn();
-                }
-            };
-            diagnosticSection.appendChild(diagnosticBtn);
+            // 高亮显示如果有差异
+            const rawProfit = parseFloat(truncateTo2Decimals(rawData.totalProfit));
+            const eachProfit = parseFloat(truncateTo2Decimals(truncateEachData.totalProfit));
+            const profitProfit = parseFloat(truncateTo2Decimals(truncateProfitData.totalProfit));
             
-            // 检查是否已经有诊断区域
-            const existingSection = document.getElementById('diagnostic-section');
-            if (existingSection) {
-                existingSection.remove();
+            if (rawProfit !== eachProfit || rawProfit !== profitProfit) {
+                row.style.backgroundColor = '#fff8e1';
             }
             
-            // 添加到结果区域
-            resultContainer.appendChild(diagnosticSection);
+            tbody.appendChild(row);
+        });
+        
+        table.appendChild(tbody);
+            diagnosticContent.appendChild(table);
+        
+        // 添加帮助说明
+        const helpText = document.createElement('div');
+        helpText.style.cssText = 'margin-top: 15px; font-size: 14px; color: #555;';
+        helpText.innerHTML = `
+            <p>如果你的人工计算结果和上面某种模式匹配，请选择该计算模式。</p>
+            <p>如需更多帮助，请手动计算几笔订单并详细记录金额，以便比对。</p>
+        `;
+            diagnosticContent.appendChild(helpText);
+        
+            // 显示弹窗
+            modal.classList.add('show');
             
             hideLoading();
         }, 10);
-    }
-    
-    // 显示诊断按钮
-    function showDiagnosticBtn() {
-        if (document.getElementById('show-diagnostic-btn')) return;
-        
-        const btn = document.createElement('button');
-        btn.id = 'show-diagnostic-btn';
-        btn.textContent = '显示计算诊断';
-        btn.style.cssText = 'margin: 10px 0; padding: 5px 10px; background-color: #e9ecef; border: 1px solid #ddd; border-radius: 4px;';
-        btn.onclick = runDiagnostics;
-        
-        const resultContainer = document.querySelector('#result-section');
-        resultContainer.insertBefore(btn, resultContainer.children[2]);
     }
     
     // 根据不同模式计算每日利润

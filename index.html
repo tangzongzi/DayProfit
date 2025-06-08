@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>订单利润计算工具</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- 添加图标库 -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <!-- 延迟加载XLSX库 -->
     <script>
         // 当用户点击上传按钮时才加载XLSX库
@@ -31,73 +33,122 @@
         <h1>订单利润计算工具</h1>
         <div class="upload-section">
             <input type="file" id="fileUpload" accept=".xlsx,.xls,.csv" onclick="loadXLSXLibrary()" />
-            <label for="fileUpload" class="upload-btn">选择文件</label>
-            <span id="file-name">未选择文件</span>
+            <div class="upload-container">
+                <label for="fileUpload" class="upload-btn">
+                    <i class="ri-upload-cloud-2-line"></i>
+                    <span class="btn-text">选择文件</span>
+                    <span id="file-name"></span>
+                </label>
+            </div>
         </div>
         
         <div class="filter-section">
             <div class="filter-item">
-                <label for="statusFilter">订单状态筛选：</label>
+                <label for="statusFilter">订单状态:</label>
                 <select id="statusFilter">
-                    <option value="交易成功和待客户确认和待发货">交易成功/待客户确认/待发货</option>
-                    <option value="all">所有订单</option>
+                    <option value="交易成功和待客户确认和待发货">交易成功/待确认/待发货</option>
+                    <option value="all">全部订单</option>
                 </select>
             </div>
+            
             <div class="filter-item">
-                <label for="dateRange">日期范围：</label>
+                <label for="dateRange">日期范围:</label>
                 <input type="date" id="startDate" placeholder="开始日期">
-                <span>至</span>
+                <span class="date-separator">至</span>
                 <input type="date" id="endDate" placeholder="结束日期">
             </div>
-            <button id="calculateBtn" class="calculate-btn">计算利润</button>
+            
+            <div class="filter-item">
+                <label for="calculationMode">计算模式:</label>
+                <select id="calculationMode">
+                    <option value="raw">原始数据计算</option>
+                    <option value="truncateEach">每项先截断</option>
+                    <option value="truncateProfit">利润后截断</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button id="calculateBtn" class="calculate-btn"><i class="ri-calculator-line"></i> 计算</button>
         </div>
         
         <div id="result-section" class="hidden">
-            <h2>每日利润统计</h2>
-            <div class="summary">
-                <div class="summary-item">
-                    <span class="label">统计天数：</span>
-                    <span id="totalDays" class="value">0</span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">总订单数：</span>
-                    <span id="totalOrders" class="value">0</span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">总利润：</span>
-                    <span id="totalProfit" class="value">0 元</span>
-                </div>
-                <div class="summary-item">
-                    <button id="copyAllProfitsBtn" class="copy-btn">复制所有利润</button>
+            <div class="summary-card">
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="label">统计天数</span>
+                        <span id="totalDays" class="value">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">订单数</span>
+                        <span id="totalOrders" class="value">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">总利润</span>
+                        <span id="totalProfit" class="value profit-highlight">0 元</span>
+                    </div>
+                    <div class="summary-action">
+                        <button id="copyAllProfitsBtn" class="copy-btn"><i class="ri-clipboard-line"></i> 复制利润</button>
+                        <button id="show-diagnostic-btn" class="icon-btn" title="显示诊断"><i class="ri-search-line"></i></button>
+                    </div>
                 </div>
             </div>
-            <table id="result-table">
-                <thead>
-                    <tr>
-                        <th>日期</th>
-                        <th>总利润</th>
-                        <th>订单数量</th>
-                        <th>总收入(店铺商品小计)</th>
-                        <th>总支出(小计金额)</th>
-                    </tr>
-                </thead>
-                <tbody id="result-body"></tbody>
-            </table>
+            <div class="table-container">
+                <table id="result-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>利润</th>
+                            <th>订单数</th>
+                            <th>收入</th>
+                            <th>支出</th>
+                        </tr>
+                    </thead>
+                    <tbody id="result-body"></tbody>
+                </table>
+            </div>
         </div>
+        
+        <!-- 诊断弹窗 -->
+        <div id="diagnostic-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>计算诊断信息</h3>
+                    <button class="close-modal"><i class="ri-close-line"></i></button>
+                </div>
+                <div id="diagnostic-content" class="modal-body">
+                    <!-- 诊断内容将通过JavaScript动态插入 -->
+                </div>
+            </div>
+        </div>
+        
+        <footer class="app-footer">
+            <p>订单利润计算工具 © 2025</p>
+        </footer>
     </div>
     <script src="script.js"></script>
     <script>
     // 添加在文件上传后
     document.getElementById('fileUpload').addEventListener('change', function() {
+        const btnText = document.querySelector('.btn-text');
+        const fileName = document.getElementById('file-name');
+        
+        if (!this.files || !this.files[0]) return;
+        
         var reader = new FileReader();
         reader.onloadstart = function() {
-            document.getElementById('file-name').textContent = "正在加载文件...";
+            fileName.textContent = "正在加载...";
+            fileName.classList.add('loading');
+            btnText.textContent = "已选择";
         };
         reader.onprogress = function(e) {
             if (e.lengthComputable) {
                 var percent = Math.round((e.loaded / e.total) * 100);
-                document.getElementById('file-name').textContent = '加载中: ' + percent + '%';
+                fileName.textContent = percent + '%';
             }
+        };
+        reader.onloadend = function() {
+            fileName.classList.remove('loading');
         };
     });
     </script>
