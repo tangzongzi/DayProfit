@@ -1182,3 +1182,40 @@ th, td {
     text-align: center !important;
     vertical-align: middle;
 } 
+
+/* 数据源选择下拉菜单样式 */
+#dataSource {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    font-size: 14px;
+    width: 150px;
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#dataSource:hover {
+    border-color: #aaa;
+}
+
+#dataSource:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
+}
+
+/* 高级选项按钮样式 */
+.advanced-toggle {
+    transition: color 0.3s;
+}
+
+.advanced-toggle:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* 数据源选项样式 */
+#dataSource option {
+    padding: 8px;
+} 

@@ -44,10 +44,10 @@
         
         <div class="filter-section">
             <div class="filter-item">
-                <label for="statusFilter">订单状态:</label>
-                <select id="statusFilter">
-                    <option value="交易成功和待客户确认和待发货">交易成功/待确认/待发货</option>
-                    <option value="all">全部订单</option>
+                <label for="dataSource">数据源:</label>
+                <select id="dataSource">
+                    <option value="douyin">抖音手续费统计</option>
+                    <option value="duozhan">多赞订单统计</option>
                 </select>
             </div>
             
@@ -58,8 +58,8 @@
                 <input type="date" id="endDate" placeholder="结束日期">
             </div>
             
-            <div class="filter-item">
-                <label for="calculationMode">计算模式:</label>
+            <div class="filter-item advanced-options" style="display: none;">
+                <label for="calculationMode">高级计算选项:</label>
                 <select id="calculationMode">
                     <option value="raw">原始数据计算</option>
                     <option value="truncateEach">每项先截断</option>
