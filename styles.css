@@ -456,6 +456,98 @@ h2:before {
     display: inline-block;
 }
 
+/* 表格样式优化 - 增加特异性以确保在各环境中生效 */
+.table-container {
+    overflow-x: auto;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    width: 100%;
+}
+
+#result-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+    table-layout: fixed;
+}
+
+#result-table th {
+    padding: 12px 10px !important; /* 使用!important确保优先级 */
+    background-color: #f9fafb;
+    border-bottom: 2px solid #e2e8f0;
+    color: #1e293b;
+    font-weight: 600;
+    text-align: center !important;
+    white-space: nowrap; /* 防止表头换行 */
+}
+
+#result-table td {
+    padding: 10px 8px !important; /* 使用!important确保优先级 */
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+    text-align: center !important;
+    white-space: nowrap; /* 防止内容换行 */
+}
+
+/* 日期列样式调整 - 增强特异性 */
+#result-table td:first-child,
+#result-table th:first-child {
+    text-align: center !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    max-width: 90px !important;
+    width: 90px !important; /* 固定宽度 */
+}
+
+/* 订单数列样式调整 - 增强特异性 */
+#result-table td:nth-child(3),
+#result-table th:nth-child(3) {
+    text-align: center !important;
+    width: 70px !important; /* 固定宽度 */
+    max-width: 70px !important;
+}
+
+/* 金额列样式调整 - 增强特异性 */
+#result-table td:nth-child(2),
+#result-table td:nth-child(4),
+#result-table td:nth-child(5),
+#result-table th:nth-child(2),
+#result-table th:nth-child(4),
+#result-table th:nth-child(5) {
+    text-align: right !important; /* 金额右对齐 */
+    padding-right: 15px !important;
+    width: 100px !important; /* 固定宽度 */
+}
+
+/* 修复Netlify环境下的表格问题 */
+body #result-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+}
+
+body #result-table th,
+body #result-table td {
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* 确保在移动设备上正确显示 */
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* 表格在移动设备上的固定布局 */
+    #result-table {
+        min-width: 600px !important;
+        table-layout: fixed !important;
+    }
+}
+
 /* 表格样式深度优化 */
 table {
     width: 100%;

@@ -1442,41 +1442,58 @@ document.addEventListener('DOMContentLoaded', function() {
         
         headerRow.innerHTML = '';
         
-        // 添加日期列
+        // 添加日期列 - 减小宽度
         const dateHeader = document.createElement('th');
         dateHeader.textContent = '日期';
+        dateHeader.style.width = '90px'; // 减小日期列宽度
+        dateHeader.style.maxWidth = '90px'; 
         headerRow.appendChild(dateHeader);
         
         if (dataType === '抖音手续费') {
             // 抖音手续费表头
             const headers = [
-                { text: '手续费净额', width: '120px' },
-                { text: '订单数', width: '100px' },
-                { text: '理论佣金', width: '120px' },
-                { text: '免佣金额', width: '120px' }
+                { text: '手续费净额', width: '110px' },
+                { text: '订单数', width: '70px' },  // 减小订单数列宽
+                { text: '理论佣金', width: '100px' },
+                { text: '免佣金额', width: '100px' }
             ];
             
             headers.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header.text;
-                if (header.width) th.style.width = header.width;
+                if (header.width) {
+                    th.style.width = header.width;
+                    th.style.minWidth = header.width;
+                }
                 headerRow.appendChild(th);
             });
         } else {
             // 多赞订单表头
             const headers = [
-                { text: '订单利润', width: '120px' },
-                { text: '订单数', width: '100px' },
-                { text: '收入', width: '120px' },
-                { text: '支出', width: '120px' }
+                { text: '订单利润', width: '110px' },
+                { text: '订单数', width: '70px' },  // 减小订单数列宽
+                { text: '收入', width: '100px' },
+                { text: '支出', width: '100px' }
             ];
             
             headers.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header.text;
-                if (header.width) th.style.width = header.width;
+                if (header.width) {
+                    th.style.width = header.width;
+                    th.style.minWidth = header.width;
+                }
                 headerRow.appendChild(th);
             });
         }
+        
+        // 强制应用表格布局
+        setTimeout(() => {
+            const table = document.getElementById('result-table');
+            if (table) {
+                table.style.tableLayout = 'fixed';
+                table.style.width = '100%';
+            }
+        }, 0);
     }
 }); 
